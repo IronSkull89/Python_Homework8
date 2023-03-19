@@ -1,51 +1,40 @@
-separator = " | "
-dir_file = "data.txt"
-class Subscriber:
-    
-    def __init__(self, index, name, phone):
-        self.index = index
-        self.name = name
-        self.phone = phone
+import functions as f
+from classes import Subscriber
 
-    def update(self, name, phone):
-        self.name = name
-        self.phone = phone
+def editing(subscriber):
+    global directory
+    subscriber.update(input("Введите ФИО абонента: "), input("Введите телефон абонента: "))
+    directory[subscriber.index] = f.subscriber_to_str(subscriber, separator)
+    directory.pop()
+    f.write_file(dir_file, directory)
+    print(f"{subscriber.name} | {subscriber.phone}")
 
+def deleting(subscriber):
+    global directory
+    del directory[subscriber.index]
+    f.write_file(dir_file, directory)
+    print("Абонент удалён")
 
-def write_subscriber(subscriber):
-    with open(dir_file, 'a', encoding='utf-8') as data:
-        data.write(f'{subscriber.name}{separator}{subscriber.phone}\n')
+def output_result_search(result_search):
+    count = len(result_search)
+    if count == 1:
+        subscriber = result_search[0]
+        print(f"{subscriber.name} | {subscriber.phone}")
+        subscriber_menu(subscriber)
+    elif count > 1:
+        print(f"По запросу найдено {count} абонента")
+        print('\n'.join([f"{item.name} | {item.phone}" for item in result_search]))
+    elif count == 0:
+        print("По запросу абонентов не найдено")
 
-def read_data():
-    with open(dir_file, 'r', encoding='utf-8') as f:
-        data = list(str(f.read()).split('\n'))
-    return data
-
-def search_subscriber(book, searching_data):
-    result = []
-    for el_str in book:
-        if searching_data.lower() in el_str.lower():
-            el = el_str.split(separator)
-            result.append(Subscriber(book.index(el_str), el[0], el[1]))
-    return result
-
-def write_file(data, directory):
-    with open(data, 'w', encoding='utf-8') as f:
-        for line in directory:
-            f.write(f"{line}\n")
-
-def subscriber_menu(directory, subscriber):
+def subscriber_menu(subscriber):
     while True:
         print('1 - редактирование\n2 - удаление\n0 - назад')
         mode = input('Выбор режима работы: ')
         if mode == '1':
-            directory[subscriber.index] = subscriber.update(input("Введите ФИО абонента: "), input("Введите телефон абонента: "))
-            write_file(dir_file, directory)
-            print(f"{subscriber.name} | {subscriber.phone}")
+            editing(subscriber) 
         elif mode == '2':
-            del directory[subscriber.index]
-            write_file(dir_file, directory)
-            print("Абонент удалён")
+            deleting(subscriber) 
             break
         elif mode == '0':
             break
@@ -54,27 +43,24 @@ def subscriber_menu(directory, subscriber):
     return subscriber
 
 def main_menu():
+    global directory
     while True:
         print('1 - запись\n2 - поиск\n0 - выход')
         mode = input('Выбор режима работы: ')
         if mode == '1':
-            write_subscriber(Subscriber(-1, input("Введите ФИО нового абонента: "), input("Введите телефон нового абонента: ")))
+            f.write_subscriber(dir_file, Subscriber(-1, input("Введите ФИО нового абонента: "), input("Введите телефон нового абонента: ")), separator)
         elif mode == '2':
-            directory = read_data()
-            result_search = search_subscriber(directory, input('Найти: '))
-            count = len(result_search)
-            if count == 1:
-                subscriber = result_search[0]
-                print(f"{subscriber.name} | {subscriber.phone}")
-                subscriber_menu(directory, subscriber)
-            elif count > 1:
-                print(f"По запросу найдено {count} абонента")
-            elif count == 0:
-                print(f"По запросу абонентов не найдено")    
+            directory = f.read_data(dir_file)
+            result_search = f.search_subscriber(directory, input('Найти: '), separator)
+            output_result_search(result_search)
         elif mode == '0':
             break
         else:
             print('Неверное значение')
     return 1        
+
+separator = " | "
+dir_file = "data.txt"
+directory = []
 
 main_menu()
